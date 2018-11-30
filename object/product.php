@@ -152,7 +152,7 @@ class Product
     // delete product
     function delete(){
     //delete query
-   // $query = "DELETE FROM " . $this->table_name . " WHERE id = ?";
+    $query = "DELETE FROM " . $this->table_name . " WHERE id = ?";
 
     //prepare query
     $stmt  = $this->conn->prepare($query);
@@ -168,6 +168,73 @@ class Product
         return true;
     }
     return false;
+    }
+
+    //search products
+    function search($keywords){
+        $query = "SELECT
+                    c.name as category_name, p.id, p.name, p.description,p.price, p.category_id, created
+                FROM 
+                    " . $this->table_name . " p
+                    LEFT JOIN 
+                        categories c
+                            ON p.category_id = c.id
+                WHERE 
+                    p.name LIKE ? OR p.description LIKE ? OR c.name LIKE ?
+                ORDER BY
+                    p.created DESC";
+    //prepare the query statement
+    $stmt = $this->conn->prepare($query);
+    
+    //sanitize
+    $keywords=htmlspecialchars(strip_tags($keywords));
+    $keywords="%{$keywords}%";
+
+    //bind
+    $stmt->bindParam(1,$keywords);
+    $stmt->bindParam(2,$keywords);
+    $stmt->bindParam(3,$keywords);
+
+    //execute query
+    $stmt->execute();
+    
+    return $stmt;
+    }
+
+    //read product with pagination 
+    public function readPaging($from_record_num,$from_per_page) {
+
+        //select query
+        $query = "SELECT
+                    c.name as category_name, p.id, p.name, p.description, p.price, p.category_id, p.created
+                  FROM
+                  " . $this->table_name . " p
+                    LEFT JOIN 
+                        categories C
+                            ON p.category_id = c.id 
+                  ORDER BY p.created DESC
+                  LIMIT ? ,? ";
+        // prepare query statement
+        $stmt->bindParam(1, $from_record_num, PDO::PARAM_INT);
+        $stmt->bindParam(2, $records_per_page, PDO::PARAM_INT);
+        
+        //execute query 
+        $stmt->execute();
+
+        //return values from database
+        return $stmt;        
+    }
+
+    //used for paging products
+    public function count() {
+        $query = "SELECT COUNT (*) as total_row FROM . $this->table_name . "";
+
+        $stmt = $this->conn->prepare( $query );
+        $stmt->execute();
+        $row 0 $stmt->fetch(PDO::DETCH_ASSOC);
+
+        return $row['total_rows];
+
     }
 
 }
